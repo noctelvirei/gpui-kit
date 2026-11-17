@@ -63,4 +63,5 @@ pub use textarea::Textarea;
 
 pub(crate) fn init(cx: &mut gpui::App) {
     language_config::init(cx);
+    search::init(cx);
 }

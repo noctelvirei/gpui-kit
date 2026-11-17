@@ -4,7 +4,7 @@ use std::ops::Range;
 
 use gpui::{
     App, AppContext as _, Context, Empty, Entity, FocusHandle, Focusable, Half,
-    InteractiveElement as _, IntoElement, ParentElement as _, Pixels, Render, Styled, Subscription,
+    InteractiveElement as _, IntoElement, KeyBinding, ParentElement as _, Pixels, Render, Styled, Subscription,
     WeakEntity, Window, actions, div, prelude::FluentBuilder as _,
 };
 
@@ -22,7 +22,18 @@ use crate::{
 
 const CONTEXT: &'static str = "SearchPanel";
 
-actions!(input, [Tab]);
+actions!(input, [Tab, ReplaceNext, ReplaceAll]);
+
+/// Binds keys to Replace and Replace All, which are otherwise buttons only:
+/// VS Code's Ctrl+Shift+1 / Ctrl+Alt+Enter and SSMS's Alt+R / Alt+A.
+pub(crate) fn init(cx: &mut App) {
+    cx.bind_keys([
+        KeyBinding::new("ctrl-shift-1", ReplaceNext, Some(CONTEXT)),
+        KeyBinding::new("alt-r", ReplaceNext, Some(CONTEXT)),
+        KeyBinding::new("ctrl-alt-enter", ReplaceAll, Some(CONTEXT)),
+        KeyBinding::new("alt-a", ReplaceAll, Some(CONTEXT)),
+    ]);
+}
 
 #[cfg(test)]
 use gpui_base::input::SearchMatcher;
@@ -335,6 +346,12 @@ impl<M: crate::input::overlay::OverlayMode> Render for SearchPanel<M> {
             .on_action(cx.listener(Self::on_action_tab))
             .on_action(cx.listener(Self::on_action_tab_prev))
             .on_action(cx.listener(Self::on_action_replace))
+            .on_action(cx.listener(|this, _: &ReplaceNext, window, cx| {
+                this.replace_next(window, cx)
+            }))
+            .on_action(cx.listener(|this, _: &ReplaceAll, window, cx| {
+                this.replace_all(window, cx)
+            }))
             .font_family(cx.theme().font_family.clone())
             .items_center()
             .py_2()
